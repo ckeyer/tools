@@ -2,8 +2,10 @@ package main
 
 import (
 	"errors"
-	// "log"
+	"io/ioutil"
+	"os"
 	"sort"
+	"strings"
 )
 
 type IPAddrs []*IPAddr
@@ -27,6 +29,20 @@ func (this IPAddrs) Swap(i, j int) {
 	this[i], this[j] = this[j], this[i]
 }
 
+func (this *BlackList) InitOldList() {
+	fout, err := os.OpenFile(blacklistFile, os.O_RDONLY, 0666)
+	if err != nil {
+		panic(err)
+	}
+	defer fout.Close()
+
+	fd, err := ioutil.ReadAll(fout)
+
+	items := strings.Split(string(fd), "\n")
+	for _, v := range items {
+		blk.AddOld(v)
+	}
+}
 func (this *BlackList) Add(ip string) {
 	item := NewIPAddr(ip)
 	if item == nil {
@@ -35,7 +51,19 @@ func (this *BlackList) Add(ip string) {
 	}
 	this.addItem(item)
 }
-
+func (this *BlackList) AddOld(ip string) {
+	item := NewIPAddr(ip)
+	if item == nil {
+		err := errors.New("Parse IP Error " + ip)
+		panic(err)
+	}
+	for _, v := range this.OldIps {
+		if v.Equal(item) {
+			return
+		}
+	}
+	this.addToOld(item)
+}
 func (this *BlackList) addItem(ip *IPAddr) {
 	for _, v := range this.OldIps {
 		if v.Equal(ip) {
@@ -65,4 +93,26 @@ func (this *BlackList) addToOld(ip *IPAddr) {
 func (this *BlackList) addToTmp(ip *IPAddr) {
 	this.TmpIps = append(this.TmpIps, ip)
 	sort.Sort(blk.TmpIps)
+}
+
+func (this *BlackList) WriteTxt() {
+	fout, err := os.OpenFile(blacklistFile, os.O_CREATE, 0666)
+	if err != nil {
+		panic(err)
+	}
+	defer fout.Close()
+	for _, v := range this.TmpIps {
+		fout.WriteString(v.String() + "\r\n")
+	}
+}
+
+func (this *BlackList) WriteDeny() {
+	fout, err := os.OpenFile(hostsDenyFile, os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	defer fout.Close()
+	for _, v := range this.TmpIps {
+		fout.WriteString("ALL: " + v.String() + "\r\n")
+	}
 }

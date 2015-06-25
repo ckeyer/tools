@@ -24,6 +24,7 @@ var (
 )
 
 func init() {
+	blk.InitOldList()
 	sl := ReadLogFile()
 	items := strings.Split(sl, "\n")
 	for _, v := range items {
@@ -31,6 +32,8 @@ func init() {
 			handleLog(v)
 		}
 	}
+	blk.WriteDeny()
+	blk.WriteTxt()
 	for _, v := range blk.TmpIps {
 		log.Println(v)
 	}

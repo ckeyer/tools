@@ -25,6 +25,7 @@ func NewIPAddr(s string) *IPAddr {
 	for i, v := range bs {
 		n, e := strconv.Atoi(v)
 		if e != nil {
+			fmt.Println(e)
 			return nil
 		}
 		id += uint32(n) << uint32((3-i)*8)
