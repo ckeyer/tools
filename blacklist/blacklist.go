@@ -10,8 +10,17 @@ import (
 
 type IBlockList interface {
 	InitOldList()
-	Add(ip string)
+	Add(ip string) int
 	Operate()
+}
+
+func InitBlockList(blk IBlockList) {
+	blk.InitOldList()
+}
+func AddNew(blk IBlockList, ip string) {
+	if blk.Add(ip) > 0 {
+		blk.Operate()
+	}
 }
 
 type IPAddrs []*IPAddr
@@ -122,7 +131,7 @@ func (this *BlackList) WriteDeny() {
 	}
 	this.NewIps = nil
 }
-func (this *BlockList) Operate() {
+func (this *BlackList) Operate() {
 	this.WriteDeny()
 	this.WriteTxt()
 }

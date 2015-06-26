@@ -32,6 +32,7 @@ type App struct {
 
 func init() {
 	log = logpkg.New(os.Stdout, "# BLK #: ", logpkg.Lshortfile)
+
 	blk.InitOldList()
 	sl := ReadLogFile()
 	items := strings.Split(sl, "\n")
