@@ -5,16 +5,28 @@
 package main
 
 import (
+	"container/list"
 	"github.com/howeyc/fsnotify"
 	"log"
 )
 
-var (
+const (
 	watchFile     = "testfile.log"
 	blacklistFile = "blacklist.txt"
 	hostsDenyFile = "hosts.deny"
 )
 
+var (
+	app *App
+)
+
+type App struct {
+	A list.List
+}
+
+func init() {
+	A = list.New()
+}
 func main() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
