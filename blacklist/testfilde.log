@@ -1,0 +1,12 @@
+Jun 25 04:55:53 MyUbuntuCloud sshd[26154]: Failed password for root from 1.24.247.113 port 64892 ssh2
+Jun 25 04:55:54 MyUbuntuCloud sshd[26156]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=1.24.247.113  user=root
+Jun 25 04:55:56 MyUbuntuCloud sshd[26156]: Failed password for root from 1.24.247.113 port 9944 ssh2
+Jun 25 04:55:58 MyUbuntuCloud sshd[26158]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=1.24.247.113  user=root
+Jun 25 04:56:00 MyUbuntuCloud sshd[26158]: Failed password for root from 1.24.247.113 port 11197 ssh2
+Jun 25 04:56:01 MyUbuntuCloud sshd[26160]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=1.24.247.113  user=root
+Jun 25 04:56:03 MyUbuntuCloud sshd[26160]: Failed password for root from 1.24.247.113 port 12548 ssh2
+Jun 25 04:56:05 MyUbuntuCloud sshd[26162]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=1.24.247.113  user=root
+Jun 25 04:56:07 MyUbuntuCloud sshd[26162]: Failed password for root from 1.24.247.113 port 13912 ssh2
+Jun 25 04:56:08 MyUbuntuCloud sshd[26164]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=1.24.247.113  user=root
+Jun 25 04:56:10 MyUbuntuCloud sshd[26164]: Failed password for root from 1.24.247.113 port 15124 ssh2
+Jun 25 04:56:12 MyUbuntuCloud sshd[26214]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=1.24.247.113  user=root
