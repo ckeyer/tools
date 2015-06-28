@@ -102,7 +102,7 @@ func (this *BlackList) WriteTxt() {
 	}
 	defer fout.Close()
 	for _, v := range this.TmpIps {
-		fout.WriteString(v.String() + "\r\n")
+		fout.WriteString(v.String() + "\n")
 	}
 }
 
@@ -113,6 +113,6 @@ func (this *BlackList) WriteDeny() {
 	}
 	defer fout.Close()
 	for _, v := range this.TmpIps {
-		fout.WriteString("ALL: " + v.String() + "\r\n")
+		fout.WriteString("ALL: " + v.String() + "\n")
 	}
 }
