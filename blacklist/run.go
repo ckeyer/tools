@@ -5,11 +5,10 @@
 package main
 
 import (
+	"container/list"
 	"github.com/howeyc/fsnotify"
-	"io/ioutil"
-	"log"
+	logpkg "log"
 	"os"
-	"strings"
 )
 
 const (
@@ -21,42 +20,34 @@ const (
 
 var (
 	blk BlackList
+	app *App
+	log *logpkg.Logger
 )
 
-func init() {
-	blk.InitOldList()
-	sl := ReadLogFile()
-	items := strings.Split(sl, "\n")
-	for _, v := range items {
-		if strings.Contains(v, indexString) {
-			handleLog(v)
-		}
-	}
-	blk.WriteDeny()
-	blk.WriteTxt()
-	for _, v := range blk.TmpIps {
-		log.Println(v)
-	}
+type App struct {
+	A list.List
 }
-func handleLog(s string) {
-	for i, v := range strings.Fields(s) {
-		if i == 10 {
-			blk.Add(v)
-		}
-	}
+
+func init() {
+	log = logpkg.New(os.Stdout, "# BLK #: ", logpkg.Lshortfile)
+	blk.InitOldList()
+	blk.ReadLogFile()
 }
 func main() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
-
 	}
 	done := make(chan bool)
 	go func() {
 		for {
 			select {
 			case ev := <-watcher.Event:
-				log.Println("event:", ev)
+				if ev.IsModify() {
+					log.Println("event:", ev)
+					blk.ReadLogFile()
+					log.Println("Add Over")
+				}
 			case err := <-watcher.Error:
 				log.Println("error:", err)
 			}
@@ -69,14 +60,4 @@ func main() {
 	}
 	<-done
 	watcher.Close()
-}
-
-func ReadLogFile() string {
-	fi, err := os.Open(logFile)
-	if err != nil {
-		panic(err)
-	}
-	defer fi.Close()
-	fd, err := ioutil.ReadAll(fi)
-	return string(fd)
 }

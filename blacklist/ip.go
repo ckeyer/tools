@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -16,17 +17,20 @@ func (this *IPAddr) String() string {
 }
 
 func NewIPAddr(s string) *IPAddr {
+	if len(s) < 7 {
+		return nil
+	}
 	var p [4]byte
 	var id uint32 = 0
+	// s = strings.Trim(s, "\r")
 	bs := strings.Split(s, ".")
 	if len(bs) != 4 {
-		return nil
+		panic(errors.New("IP Length Error :#" + s + "#"))
 	}
 	for i, v := range bs {
 		n, e := strconv.Atoi(v)
 		if e != nil {
-			fmt.Println(e)
-			return nil
+			panic(e)
 		}
 		id += uint32(n) << uint32((3-i)*8)
 		p[i] = byte(n)

@@ -20986,3 +20986,22 @@ Jun 25 18:14:57 MyUbuntuCloud sshd[8243]: reverse mapping checking getaddrinfo f
 Jun 25 18:15:00 MyUbuntuCloud sshd[8243]: Accepted publickey for root from 219.136.31.221 port 60361 ssh2
 Jun 25 18:15:00 MyUbuntuCloud sshd[8243]: pam_unix(sshd:session): session opened for user root by (uid=0)
 Jun 25 18:15:00 MyUbuntuCloud sshd[8243]: pam_unix(sshd:session): session opened for user root by (uid=0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Jun 24 16:16:31 MyUbuntuCloud sshd[22839]: Failed password for root from 13.101.81.148 port 39730 ssh2
+Jun 24 16:16:31 MyUbuntuCloud sshd[22839]: Failed password for root from 14.101.81.148 port 39730 ssh2
+Jun 24 16:16:31 MyUbuntuCloud sshd[22839]: Failed password for root from 14.101.81.148 port 39730 ssh2
+Jun 24 16:16:31 MyUbuntuCloud sshd[22839]: Failed password for root from 14.101.81.14 port 39730 ssh2
