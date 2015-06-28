@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	logFile       = "testfile.log"
-	blacklistFile = "blacklist.txt"
-	hostsDenyFile = "hosts.deny"
+	logFile       = "/var/log/auth.log"
+	blacklistFile = "/www/d/blacklist.txt"
+	hostsDenyFile = "/etc/hosts.deny"
 	indexString   = "Failed password for root from"
 )
 
