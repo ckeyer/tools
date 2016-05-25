@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "errors"
 	"io/ioutil"
 	"os"
 	"sort"
@@ -33,19 +32,24 @@ type BlackList struct {
 func (this IPAddrs) Len() int {
 	return len(this)
 }
+
 func (this IPAddrs) Less(i, j int) bool {
 	if this[i].Id < this[j].Id {
 		return true
 	}
 	return false
 }
+
 func (this IPAddrs) Swap(i, j int) {
 	this[i], this[j] = this[j], this[i]
 }
 
 // 初始化：获取已有黑名单列表
 func (this *BlackList) InitOldList() {
-	fout, err := os.OpenFile(blacklistFile, os.O_RDONLY, 0666)
+	fout, err := os.OpenFile(hostsDenyFile, os.O_RDONLY, 0666)
+	if err == os.ErrNotExist {
+		fout, err = os.OpenFile(hostsDenyFile, os.O_WRONLY|os.O_CREATE, 0666)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +59,15 @@ func (this *BlackList) InitOldList() {
 
 	items := strings.Split(string(fd), "\n")
 	for _, v := range items {
-		blk.AddOld(v)
+		if strings.HasPrefix(v, "#") {
+			continue
+		}
+		if strings.TrimSpace(v) == "" {
+			continue
+		}
+
+		kv := strings.SplitN(v, ":", 2)
+		blk.AddOld(kv[1])
 	}
 }
 

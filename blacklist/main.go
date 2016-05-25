@@ -33,6 +33,7 @@ func init() {
 	blk.InitOldList()
 	blk.ReadLogFile()
 }
+
 func main() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
