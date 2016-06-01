@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
+// "fmt"
+// "io/ioutil"
+// "os"
 
-	"github.com/PuerkitoBio/goquery"
-	"gopkg.in/mgo.v2"
+// "github.com/PuerkitoBio/goquery"
+// "gopkg.in/mgo.v2"
 )
 
 type People struct {
@@ -17,7 +17,6 @@ type People struct {
 }
 
 func inset() {
-	db := *mgo.Database
-	db.C("name").Insert(...)
-	mgo.Collection.Insert(...)
+	// db := *mgo.Database
+	// _ = db
 }

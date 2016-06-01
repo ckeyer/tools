@@ -2,13 +2,18 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/Sirupsen/logrus"
+)
+
+const (
+	user_email    = "me@luv.gift"
+	user_password = "zhihuData"
 )
 
 func init() {
@@ -99,13 +104,19 @@ func (c *Client) Login(email, password string) (bool, error) {
 }
 
 func (c *Client) GetPeople(name string) (*goquery.Document, error) {
-	peopleURL := "https://www.zhihu.com/people/" + name
+	peopleURL := "https://www.zhihu.com/people/" + name + "/about"
 	resp, err := c.httpClient.Get(peopleURL)
 	if err != nil {
 		return nil, err
 	}
+	f, err := os.OpenFile("./about.html", os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		panic(err)
+	}
+	io.Copy(f, resp.Body)
 
-	return goquery.NewDocumentFromResponse(resp)
+	return nil, nil
+	// return goquery.NewDocumentFromResponse(resp)
 }
 
 func main() {
@@ -122,8 +133,8 @@ func main() {
 		log.Errorf("login failed, no error message")
 	}
 
-	if doc, err := c.GetPeople("ckeyer"); err != nil {
-		log.Errorf("get people page failed, error: %s", err.Error())
+	if doc, err := c.GetPeople("du-mu-26"); err != nil {
+		log.Errorf("get people page failed, error: %s", err.Error(), doc)
 	}
 
 }
