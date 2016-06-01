@@ -2,33 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 
+	"github.com/PuerkitoBio/goquery"
 	log "github.com/Sirupsen/logrus"
-)
-
-const (
-	user_email    = "me@luv.gift"
-	user_password = "zhihuData"
-)
-
-var (
-	zhihuIndexURL = "http://www.zhihu.com/#signin"
-	zhihuLoginURL = "http://www.zhihu.com/login/email"
-	zhihuHeader   = map[string]string{
-		"Host":            "www.zhihu.com",
-		"User-Agent":      "Ckeyer/1.0 (Macintosh; Intel Linux 4.10; rv:16.3) Firefox/41.0",
-		"Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-		"Accept-Language": "zh-CN,en-US;q=0.7,en;q=0.3' --compressed",
-		"Connection":      "keep-alive",
-		"Pragma":          "no-cache",
-		"Cache-Control":   "no-cache",
-	}
 )
 
 func init() {
 	log.SetLevel(log.DebugLevel)
+	log.SetOutput(os.Stdout)
 }
 
 type Msg struct {
@@ -49,62 +34,96 @@ func (c CookieMap) GetValue(key string) string {
 	return ""
 }
 
-type Client struct {
-	req     *http.Request
-	cookies CookieMap
+type Jar struct {
+	cookies []*http.Cookie
 }
 
-func NewClient(email, password string) *Client {
-	req, err := http.NewRequest("GET", zhihuIndexURL, nil)
-	if err != nil {
-		log.Fatalln(err)
-		// return
-	}
-	for k, v := range zhihuHeader {
-		req.Header.Set(k, v)
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatalln(err)
-		// return
-	}
+func (jar *Jar) SetCookies(u *url.URL, cookies []*http.Cookie) {
+	jar.cookies = cookies
+}
 
+func (jar *Jar) Cookies(u *url.URL) []*http.Cookie {
+	return jar.cookies
+}
+
+type Client struct {
+	httpClient *http.Client
+	cookies    CookieMap
+}
+
+func NewClient() *Client {
+	httpClient := &http.Client{}
+	httpClient.Jar = new(Jar)
 	cookies := make(CookieMap)
-	for k, v := range resp.Cookies() {
-		req.AddCookie(v)
-		cookies[v.Name] = v
-		log.Debugf("%v: %+v", k, v)
-	}
 
+	return &Client{httpClient, cookies}
+}
+
+func (c *Client) Index() (*http.Response, error) {
+	resp, err := c.httpClient.Get("https://www.zhihu.com/#signin")
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range resp.Cookies() {
+		c.cookies[v.Name] = v
+	}
+	c.httpClient.Jar.SetCookies(resp.Request.URL, resp.Cookies())
+
+	return resp, nil
+}
+
+func (c *Client) Login(email, password string) (bool, error) {
 	params := make(url.Values)
-	params.Add("_xsrf", cookies.GetValue("_xsrf"))
+	params.Add("_xsrf", c.cookies.GetValue("_xsrf"))
 	params.Add("password", password)
 	params.Add("email", email)
 	params.Add("remember_me", "true")
 	params.Add("captcha_type", "cn")
-
-	req.Method = "POST"
-	req.URL, _ = url.Parse(zhihuLoginURL)
-	req.PostForm = params
-
-	resp, err = http.DefaultClient.Do(req)
+	resp, err := c.httpClient.PostForm("https://www.zhihu.com/login/email", params)
 	if err != nil {
-		log.Fatalln(err)
-		// return
+		return false, err
 	}
 
 	var msg Msg
 	err = json.NewDecoder(resp.Body).Decode(&msg)
 	if err != nil {
-		log.Fatalln(err)
+		return false, err
 	}
-	log.Infof("return msg: %+v", msg)
+	c.httpClient.Jar.SetCookies(resp.Request.URL, resp.Cookies())
 
-	return &Client{req, cookies}
+	log.Infof("return msg: %+v", msg)
+	if msg.R == 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (c *Client) GetPeople(name string) (*goquery.Document, error) {
+	peopleURL := "https://www.zhihu.com/people/" + name
+	resp, err := c.httpClient.Get(peopleURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return goquery.NewDocumentFromResponse(resp)
 }
 
 func main() {
+	c := NewClient()
+	if res, err := c.Index(); err != nil {
+		log.Errorf("index failed, error: %s", err.Error())
+	} else {
+		log.Debugf("index status: %S", res.Status)
+	}
 
-	c := NewClient(user_email, user_password)
-	_ = c
+	if ok, err := c.Login(user_email, user_password); err != nil {
+		log.Errorf("login failed", err.Error())
+	} else if !ok {
+		log.Errorf("login failed, no error message")
+	}
+
+	if doc, err := c.GetPeople("ckeyer"); err != nil {
+		log.Errorf("get people page failed, error: %s", err.Error())
+	}
+
 }
