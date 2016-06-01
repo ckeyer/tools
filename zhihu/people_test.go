@@ -28,30 +28,30 @@ func TestDecode(t *testing.T) {
 		"name",
 		"location",
 		"business",
-		"gender",
 		"employment",
 		"position",
 		"education",
 		"education-extra",
-		"zm-profile-header-description .content",
+		"zm-profile-header-description .unfold-item .content",
 	}
 
-	doc.Find(".zm-profile-header-main").Each(func(i int, s *goquery.Selection) {
-		for k, v := range classnames {
-			fmt.Printf("%d %s: %s\n", k, v, s.Find("."+v).Text())
-		}
-		// name := s.Find(".name").Text()
-		// location := s.Find(".location").Text()
-		// business := s.Find(".business").Text()
-		// gender := s.Find(".gender").Text()
+	baseinfo := doc.Find(".zm-profile-header-main")
+	for k, v := range classnames {
+		fmt.Printf("%d %s: %s\n", k, v, strings.TrimSpace(baseinfo.Find("."+v).Text()))
+	}
+	if baseinfo.Find(".gender i").HasClass("icon-profile-female") {
+		fmt.Printf("女的\n")
+	}
+	if baseinfo.Find(".gender i").HasClass("icon-profile-male") {
+		fmt.Printf("男的\n")
+	}
 
-		// fmt.Printf("name: %s \n", name)
-		// fmt.Printf("location: %s \n", location)
-		// fmt.Printf("business: %s \n", business)
-		// fmt.Printf("gender: %s \n", gender)
-	})
-
-	countSuffs := []string{"asks", "answers", "posts", "collections", "logs"}
+	countSuffs := []string{"asks",
+		"answers",
+		"posts",
+		"collections",
+		"logs",
+	}
 	doc.Find(".zu-main-content-inner .profile-navbar a").Each(func(i int, s *goquery.Selection) {
 		for _, suff := range countSuffs {
 			if href, ok := s.Attr("href"); ok {
@@ -62,11 +62,11 @@ func TestDecode(t *testing.T) {
 		}
 	})
 
-	doc.Find(".zm-profile-header-operation").Each(func(i int, s *goquery.Selection) {
-		for k, v := range []string{"zm-profile-header-user-agree", "zm-profile-header-user-thanks"} {
-			fmt.Printf("%d %s: %s\n", k, v, s.Find("."+v).Find("strong").Text())
-		}
-	})
+	for k, v := range []string{"zm-profile-header-user-agree",
+		"zm-profile-header-user-thanks",
+	} {
+		fmt.Printf("%d %s: %s\n", k, v, doc.Find("."+v).Find("strong").Text())
+	}
 
 	doc.Find(".zm-profile-details-wrap .zm-profile-module-desc span").Each(func(i int, s *goquery.Selection) {
 		if strings.Contains(s.Text(), "赞同") {
