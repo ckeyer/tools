@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"testing"
@@ -34,7 +35,7 @@ func TestHashFile(t *testing.T) {
 }
 
 func TestGetFiles(t *testing.T) {
-	fs, err := GetFiles("../", "../", []string{})
+	fs, err := GetFiles("../", []string{".git"})
 
 	if err != nil {
 		t.Error(err.Error())
@@ -42,6 +43,16 @@ func TestGetFiles(t *testing.T) {
 		return
 	}
 
-	t.Logf("%+v", fs)
-	t.Error("...")
+	buf := new(bytes.Buffer)
+	for _, path := range fs {
+		fi, _ := os.Stat(path)
+		size := fi.Size()
+
+		f, _ := os.Open(path)
+		siz, _ := io.Copy(buf, f)
+		f.Close()
+		if size != siz {
+			t.Errorf("%s not equae size: %d, siz: %d ", path, size, siz)
+		}
+	}
 }

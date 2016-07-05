@@ -1,3 +1,11 @@
 #!/bin/bash
 
-docker run --rm -v $(PWD):/opt/ -w /opt  alpine:edge sha1sum -c 
+shasum -c $1 1>/dev/null
+
+if [ $? = 0 ]; then
+ echo "ok"
+else
+ echo "something wrong"
+fi
+
+

@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"strings"
 
 	"github.com/urfave/cli"
 )
 
 var (
 	version string
+
+	DefaultFormat = "{{.Name}}, {{.Size}}, {{.Hash}}"
 )
 
 type hashOption struct {
@@ -20,21 +22,13 @@ type hashOption struct {
 	OutputFile    string
 	OutputFormat  string
 	HMac          string
-	Excludes      cli.StringSlice
+	Excludes      []string
 	Method        string
 }
 
 func main() {
-	option := &hashOption{ // set default option.
-		EntireDir:     false,
-		Path:          "",
-		ToUpper:       false,
-		HumanReadable: false,
-		OutputFile:    "",
-		OutputFormat:  "{{.FileName}},{{.Size}},{{.Hash}}",
-		HMac:          "",
-		Excludes:      cli.StringSlice{},
-	}
+	option := &hashOption{Excludes: []string{}}
+	excludes := cli.StringSlice{}
 
 	app := cli.NewApp()
 	app.Name = "hash"
@@ -79,7 +73,7 @@ func main() {
 				cli.StringSliceFlag{
 					Name:  "E,exclude",
 					Usage: "exclude",
-					Value: &option.Excludes,
+					Value: &excludes,
 				},
 			},
 			Before: func(c *cli.Context) error { // check input args
@@ -88,32 +82,33 @@ func main() {
 					return fmt.Errorf("invalid filename")
 				}
 				path := c.Args().Get(0)
-				absPath, err := filepath.Abs(path)
-				if err != nil {
-					return err
+				option.Path = strings.TrimSuffix(path, "/")
+
+				for _, exc := range excludes {
+					if strings.HasPrefix(exc, "#") {
+						continue
+					}
+					option.Excludes = append(option.Excludes, strings.TrimLeft(exc, " /"))
 				}
-				option.Path = absPath
+
+				if option.OutputFormat == "" {
+					option.OutputFormat = DefaultFormat
+				}
 
 				return nil
 			},
 			Action: func(c *cli.Context) error {
-				option.Method = fmt.Sprintf("%#v", c.Command.Name)
+				option.Method = c.Command.Name
 
-				return Run(option)
+				err := RunHasher(option)
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				return err
 			},
 		}
 		app.Commands = append(app.Commands, com)
 	}
 
 	app.Run(os.Args)
-}
-
-func Run(option *hashOption) error {
-
-	if !option.EntireDir {
-
-	}
-
-	fmt.Printf("debug option: %#v\n", option)
-	return nil
 }

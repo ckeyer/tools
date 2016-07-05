@@ -10,13 +10,6 @@ type Size struct {
 	humanRead bool
 }
 
-func NewSize(size int64, humanRead bool) *Size {
-	return &Size{
-		size:      size,
-		humanRead: humanRead,
-	}
-}
-
 func (s *Size) String() string {
 	if s.humanRead {
 		return s.HumanReadable()
@@ -62,15 +55,15 @@ type HashInfo struct {
 	Name     string
 	FullName string
 	Hash     HashValue
-	Size     *Size
+	Size     Size
 }
 
-func NewHashInfo(name string, size *Size, hash []byte, upper bool) *HashInfo {
+func NewHashInfo(name string, size int64, humanR bool, hash []byte, upper bool) *HashInfo {
 	abs, _ := filepath.Abs(name)
 	return &HashInfo{
 		Name:     name,
 		FullName: abs,
-		Size:     size,
+		Size:     Size{size, humanR},
 		Hash:     HashValue{hash, upper},
 	}
 }
