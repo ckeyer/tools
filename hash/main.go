@@ -62,7 +62,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:        "f, format",
-					Usage:       "output format,.",
+					Usage:       "output format, use golang template (Name, FullName, Size, Hash)",
 					Destination: &option.OutputFormat,
 				},
 				cli.StringFlag{
