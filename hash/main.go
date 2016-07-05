@@ -78,7 +78,6 @@ func main() {
 			},
 			Before: func(c *cli.Context) error { // check input args
 				if len(c.Args()) != 1 {
-					fmt.Println("error")
 					return fmt.Errorf("invalid filename")
 				}
 				path := c.Args().Get(0)
