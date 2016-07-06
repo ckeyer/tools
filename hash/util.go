@@ -16,8 +16,8 @@ func GetFiles(path string, excludes []string) ([]string, error) {
 		if f == nil || err != nil {
 			return err
 		}
-
-		matched, err := fileutils.Matches(strings.TrimPrefix(fpath, path+"/"), excludes)
+		fpath = strings.TrimPrefix(fpath, path+"/")
+		matched, err := fileutils.Matches(fpath, excludes)
 		if err != nil || matched {
 			return err
 		}

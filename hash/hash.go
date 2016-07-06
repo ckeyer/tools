@@ -11,6 +11,8 @@ import (
 	"hash"
 	"io"
 	"os"
+	"runtime"
+	"sync"
 	"text/template"
 )
 
@@ -52,83 +54,125 @@ func NewHash(method string, mac ...string) (hash.Hash, error) {
 }
 
 type Hasher struct {
-	h     hash.Hash
-	files []string
+	id            int
+	humanReadable bool
+	toUpper       bool
 
-	ioOut io.Writer
+	h     hash.Hash
 	ioErr io.Writer
 	tpl   *template.Template
+
+	exitCh chan int
 }
 
 func RunHasher(option *hashOption) error {
-	hr := &Hasher{}
+	routineNum := runtime.NumCPU() * 2
+	filesBuf := make(chan string, routineNum*2)
+	writeBuf := make(chan string, routineNum)
+	closeAll := make(chan int)
 	var err error
-
-	hr.h, err = NewHash(option.Method, option.HMac)
-	if err != nil {
-		return err
+	files := []string{}
+	if option.EntireDir {
+		files, err = GetFiles(option.Path, option.Excludes)
+		if err != nil {
+			return err
+		}
+	} else {
+		files = []string{option.Path}
 	}
 
-	hr.ioErr = os.Stderr
+	var ioOut io.Writer
 	if option.OutputFile == "" {
-		hr.ioOut = os.Stdout
+		ioOut = os.Stdout
 	} else {
 		os.Remove(option.OutputFile)
 		f, err := os.OpenFile(option.OutputFile, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0644)
 		if err != nil {
 			return err
 		}
-		hr.ioOut = f
+		ioOut = f
 		defer f.Close()
 	}
 
-	hr.tpl, err = template.New("").Parse(option.OutputFormat)
-	if err != nil {
-		return err
-	}
-	if option.EntireDir {
-		hr.files, err = GetFiles(option.Path, option.Excludes)
+	var wg sync.WaitGroup
+	go func() {
+		wg.Add(len(files))
+		for _, file := range files {
+			select {
+			case filesBuf <- file:
+			case <-closeAll:
+				return
+			}
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case data := <-writeBuf:
+				wg.Done()
+				ioOut.Write([]byte(data))
+			case <-closeAll:
+				return
+			}
+		}
+	}()
+
+	for i := 0; i < routineNum; i++ {
+		hr := &Hasher{
+			id:            i + 1,
+			humanReadable: option.HumanReadable,
+			toUpper:       option.ToUpper,
+			ioErr:         os.Stderr,
+			exitCh:        closeAll,
+		}
+		hr.h, err = NewHash(option.Method, option.HMac)
 		if err != nil {
 			return err
 		}
-	} else {
-		hr.files = []string{option.Path}
+		hr.tpl, err = template.New("").Parse(option.OutputFormat)
+		if err != nil {
+			return err
+		}
+		go hr.Run(filesBuf, writeBuf)
 	}
 
-	return hr.Run(option)
+	wg.Wait()
+	close(closeAll)
+	return nil
 }
 
-func (h *Hasher) Run(option *hashOption) error {
-	if len(h.files) == 0 {
-		return fmt.Errorf("no found any files")
-	}
-
+func (h *Hasher) Run(fileCh chan string, out chan string) {
 	buf := new(bytes.Buffer)
-	for _, v := range h.files {
-		buf.Reset()
-		f, err := os.Open(v)
-		if err != nil {
-			h.LogError("open %s failed, %s", v, err.Error())
-			continue
+	for {
+		select {
+		case name := <-fileCh:
+			// time.Sleep(time.Second)
+			buf.Reset()
+			f, err := os.Open(name)
+			if err != nil {
+				h.LogError("open %s failed, %s", name, err.Error())
+				continue
+			}
+			h.h.Reset()
+			size, err := io.Copy(h.h, f)
+			f.Close()
+			if err != nil {
+				h.LogError("do hash %s failed, %s", name, err.Error())
+				continue
+			}
+			hbs := h.h.Sum(nil)
+			hi := NewHashInfo(name, size, h.humanReadable, hbs, h.toUpper)
+			err = h.tpl.Execute(buf, hi)
+			if err != nil {
+				h.LogError("template error: %s ", err.Error())
+				continue
+			}
+			out <- buf.String() + "\n"
+		case <-h.exitCh:
+			return
 		}
-
-		h.h.Reset()
-		size, err := io.Copy(h.h, f)
-		f.Close()
-		if err != nil {
-			h.LogError("do hash %s failed, %s", v, err.Error())
-			continue
-		}
-		hbs := h.h.Sum(nil)
-		hi := NewHashInfo(v, size, option.HumanReadable, hbs, option.ToUpper)
-		err = h.tpl.Execute(buf, hi)
-		if err != nil {
-			h.LogError("template error: %s ", err.Error())
-			continue
-		}
-		h.WriteLine(buf.Bytes())
 	}
-	return nil
 }
 
 func (h *Hasher) Hash(r io.Reader) ([]byte, error) {
@@ -143,10 +187,4 @@ func (h *Hasher) Hash(r io.Reader) ([]byte, error) {
 
 func (h *Hasher) LogError(format string, args ...interface{}) {
 	fmt.Fprintf(h.ioErr, format+"\n", args...)
-}
-
-func (h *Hasher) WriteLine(data []byte) error {
-	_, err := h.ioOut.Write(data)
-	h.ioOut.Write([]byte("\n"))
-	return err
 }

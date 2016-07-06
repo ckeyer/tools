@@ -17,7 +17,7 @@ integration-test: build
 	 --exclude "***_test.go" \
 	 --exclude "vendor" \
 	 --exclude "tests" \
-	 -f "{{.Hash}}	 {{.Name}}" ./
+	 -f "{{.Hash}}  {{.Name}}" ./
 	tests/check.sh $(HASH_TMP_FILE)
 
 clear:
