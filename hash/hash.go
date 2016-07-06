@@ -69,6 +69,7 @@ func RunHasher(option *hashOption) error {
 	routineNum := runtime.NumCPU() * 2
 	filesBuf := make(chan string, routineNum*2)
 	writeBuf := make(chan string, routineNum)
+	errsCh := make(chan error, routineNum)
 	closeAll := make(chan int)
 	var err error
 	files := []string{}
@@ -112,6 +113,8 @@ func RunHasher(option *hashOption) error {
 			case data := <-writeBuf:
 				wg.Done()
 				ioOut.Write([]byte(data))
+			case <-errsCh:
+				wg.Done()
 			case <-closeAll:
 				return
 			}
@@ -134,7 +137,7 @@ func RunHasher(option *hashOption) error {
 		if err != nil {
 			return err
 		}
-		go hr.Run(filesBuf, writeBuf)
+		go hr.Run(filesBuf, writeBuf, errsCh)
 	}
 
 	wg.Wait()
@@ -142,16 +145,16 @@ func RunHasher(option *hashOption) error {
 	return nil
 }
 
-func (h *Hasher) Run(fileCh chan string, out chan string) {
+func (h *Hasher) Run(fileCh chan string, out chan string, e chan error) {
 	buf := new(bytes.Buffer)
 	for {
 		select {
 		case name := <-fileCh:
-			// time.Sleep(time.Second)
 			buf.Reset()
 			f, err := os.Open(name)
 			if err != nil {
 				h.LogError("open %s failed, %s", name, err.Error())
+				e <- err
 				continue
 			}
 			h.h.Reset()
@@ -159,6 +162,7 @@ func (h *Hasher) Run(fileCh chan string, out chan string) {
 			f.Close()
 			if err != nil {
 				h.LogError("do hash %s failed, %s", name, err.Error())
+				e <- err
 				continue
 			}
 			hbs := h.h.Sum(nil)
@@ -166,6 +170,7 @@ func (h *Hasher) Run(fileCh chan string, out chan string) {
 			err = h.tpl.Execute(buf, hi)
 			if err != nil {
 				h.LogError("template error: %s ", err.Error())
+				e <- err
 				continue
 			}
 			out <- buf.String() + "\n"
