@@ -25,13 +25,10 @@ func TestHashFile(t *testing.T) {
 		return
 	}
 
-	fi, _ := os.Stat(filename)
-	var aaa io.Reader
-	_ = aaa
 	io.Copy(h, f)
 	hash := h.Sum(nil)
-	t.Logf("file: %s, hash: %x, size: %v", filename, hash, NewSize(fi.Size(), true))
-	t.Error("...")
+	t.Logf("file: %s, hash: %x ", filename, hash)
+
 }
 
 func TestGetFiles(t *testing.T) {

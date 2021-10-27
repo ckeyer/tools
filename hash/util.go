@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ckeyer/commons/fileutils"
+	"github.com/ckeyer/commons/file"
 )
 
 func GetFiles(path string, excludes []string) ([]string, error) {
@@ -17,7 +17,7 @@ func GetFiles(path string, excludes []string) ([]string, error) {
 			return err
 		}
 		fpath = strings.TrimPrefix(fpath, path+"/")
-		matched, err := fileutils.Matches(fpath, excludes)
+		matched, err := file.Matches(fpath, excludes)
 		if err != nil || matched {
 			return err
 		}

@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ckeyer/commons/lib"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/ckeyer/commons/crypto"
 )
 
 var (
@@ -18,12 +19,12 @@ var (
 	randMap = map[string]randHandle{
 		"s": func(l int) string {
 			fmt.Println("...")
-			return lib.RandomString(l)
+			return crypto.RandomString(l)
 		},
 		"n": func(l int) string {
 			ns := make([]string, 0, l)
 			for i := 0; i < l; i++ {
-				ns = append(ns, fmt.Sprint(lib.RandomInt(*start, *end)))
+				ns = append(ns, fmt.Sprint(crypto.RandomInt(*start, *end)))
 			}
 			return strings.Join(ns, ", ")
 		},

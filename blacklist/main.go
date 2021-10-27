@@ -6,9 +6,10 @@ package main
 
 import (
 	"container/list"
-	"github.com/howeyc/fsnotify"
 	logpkg "log"
 	"os"
+
+	"github.com/howeyc/fsnotify"
 )
 
 const (
